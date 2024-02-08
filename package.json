@@ -1,0 +1,16 @@
+{
+  "name": "@p2pmoney-org/did_web_registries",
+  "version": "0.1.4",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/p2pmoney-org/did_web_registries_node_module"
+  },
+  "author": "P2PMoney.org",
+  "homepage": "https://www.p2pmoney.org/",
+  "dependencies": {
+		"crypto-js": "^4.2.0",
+    "jose": "^4.13.1",
+		"jsontokens": "^4.0.1"
+  }
+}
