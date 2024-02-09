@@ -1,4 +1,4 @@
-class DidWebCredentialVerfier {
+class DidWebCredentialVerifier {
 
 	static async getRegistryServerForDid(did_web) {
 		const WebRegistryServer = require('./web-registry-server.js');
@@ -43,7 +43,7 @@ class DidWebCredentialVerfier {
 		let path;
 
 		// ask the registrar if we can contact it
-		let web_registry_server	= await DidWebCredentialVerfier.getRegistryServerForDid(did).catch(err => {});
+		let web_registry_server	= await DidWebCredentialVerifier.getRegistryServerForDid(did).catch(err => {});
 
 		if (web_registry_server) {
 			let did_document_details = await web_registry_server.did_registry_did_document_details(did);
@@ -86,8 +86,8 @@ class DidWebCredentialVerfier {
 	static async _getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash) {
 		let revokation_status = 0;
 
-		let did_web_domain = DidWebCredentialVerfier.getDidDomain(issuer_did);
-		let issuer_did_path = await DidWebCredentialVerfier.getDidPath(issuer_did);
+		let did_web_domain = DidWebCredentialVerifier.getDidDomain(issuer_did);
+		let issuer_did_path = await DidWebCredentialVerifier.getDidPath(issuer_did);
 
 		let history = await web_registry_server.issuer_credential_status_history(credential_hash, did_web_domain);
 
@@ -116,9 +116,9 @@ class DidWebCredentialVerfier {
 	}
 
 	static async getCredentialRevokationStatus(issuer_did, credential_hash) {
-		let web_registry_server	= await DidWebCredentialVerfier.getRegistryServerForDid(issuer_did).catch(err => {});
+		let web_registry_server	= await DidWebCredentialVerifier.getRegistryServerForDid(issuer_did).catch(err => {});
 
-		return DidWebCredentialVerfier._getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash);
+		return DidWebCredentialVerifier._getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash);
 	}
 
 	static async getCredentialVerificationCard(vc_jwt) {
@@ -130,7 +130,7 @@ class DidWebCredentialVerfier {
 
 		let issuer_did = vc_obj.payload.iss;
 
-		let web_registry_server	= await DidWebCredentialVerfier.getRegistryServerForDid(issuer_did).catch(err => {});
+		let web_registry_server	= await DidWebCredentialVerifier.getRegistryServerForDid(issuer_did).catch(err => {});
 
 
 		// check that issuer's identifier exists on the registry
@@ -151,7 +151,7 @@ class DidWebCredentialVerfier {
 			vc_verification.RootTAO = {identity: {}};
 
 			let web_registrar_rest_api_endpoint = web_registry_server.web_env.rest_server_url;
-			vc_verification.RootTAO.identity.raw_certificate = await DidWebCredentialVerfier.getConnectionRawCertificate(web_registrar_rest_api_endpoint).catch(err => {});
+			vc_verification.RootTAO.identity.raw_certificate = await DidWebCredentialVerifier.getConnectionRawCertificate(web_registrar_rest_api_endpoint).catch(err => {});
 
 			if (vc_verification.RootTAO.identity.raw_certificate)
 			vc_verification.RootTAO.is_valid = 1;
@@ -169,8 +169,8 @@ class DidWebCredentialVerfier {
 			vc_verification.is_credential_signing_publicly_confirmed = 0;
 
 			// check that credential has not been revoked
-			let credential_hash = DidWebCredentialVerfier.hash256(vc_jwt);
-			vc_verification.is_credential_revoked = await DidWebCredentialVerfier._getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash);
+			let credential_hash = DidWebCredentialVerifier.hash256(vc_jwt);
+			vc_verification.is_credential_revoked = await DidWebCredentialVerifier._getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash);
 		}
 		else {
 			vc_verification.is_did_registered = -1;
@@ -184,4 +184,4 @@ class DidWebCredentialVerfier {
 }
 
  
-module.exports = DidWebCredentialVerfier;
+module.exports = DidWebCredentialVerifier;

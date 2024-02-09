@@ -11,24 +11,24 @@
 class DidWebRegistries {
 
 	static async getConnectionRawCertificate(rest_server_url) {
-		return DidWebCredentialVerfier.getConnectionRawCertificate(rest_server_url);
+		return DidWebCredentialVerifier.getConnectionRawCertificate(rest_server_url);
 	}
 	
 	static async getCredentialVerificationCard(vc_jwt) {
-		return DidWebCredentialVerfier.getCredentialVerificationCard(vc_jwt);
+		return DidWebCredentialVerifier.getCredentialVerificationCard(vc_jwt);
 	}
 
 	static async getCredentialRevokationStatus(issuer_did, credential_hash) {
-		return DidWebCredentialVerfier.getCredentialRevokationStatus(issuer_did, credential_hash);
+		return DidWebCredentialVerifier.getCredentialRevokationStatus(issuer_did, credential_hash);
 	}
 
 	static async getDidPath(did) {
-		return DidWebCredentialVerfier.getDidPath(did);
+		return DidWebCredentialVerifier.getDidPath(did);
 	}
 
 
 	static async getRegistryServerForDid(did_web) {
-		return DidWebCredentialVerfier.getRegistryServerForDid(did_web);
+		return DidWebCredentialVerifier.getRegistryServerForDid(did_web);
 	}
 
 	static getWebRegistryServer(web_env) {
@@ -39,4 +39,4 @@ class DidWebRegistries {
 module.exports = DidWebRegistries;
 
 module.exports.WebRegistryServer = WebRegistryServer;
-module.exports.DidWebCredentialVerfier = DidWebCredentialVerifier;
+module.exports.DidWebCredentialVerifier = DidWebCredentialVerifier;
