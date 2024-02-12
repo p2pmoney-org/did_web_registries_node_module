@@ -9,7 +9,18 @@ class DidWebCredentialVerifier {
 
 		let _temp_web_registry_server = await WebRegistryServer.getObject({rest_server_url: registrar_url});
 
-		let registries_config = await _temp_web_registry_server.rest_get( '/.well-known/registries-configuration');
+		let registries_config = await _temp_web_registry_server.rest_get( '/.well-known/registries-configuration').catch(err => {});
+
+		if (!registries_config && parts[3]) {
+			// try with root_path
+			let root_path = parts[3];
+			
+			registrar_url = 'https://' + domain + '/' + root_path;
+
+			_temp_web_registry_server = await WebRegistryServer.getObject({rest_server_url: registrar_url});
+
+			registries_config = await _temp_web_registry_server.rest_get( '/.well-known/registries-configuration');
+		}
 
 		let did_registrar_rest_url = registries_config.api_endpoint;
 

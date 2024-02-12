@@ -6,6 +6,7 @@
  */
   
  const DidWebCredentialVerifier = require('./imports/includes/did-web-credential-verifier.js');
+ const WebCertificate = require('./imports/includes/web-certificate.js');
  const WebRegistryServer = require('./imports/includes/web-registry-server.js');
 
 class DidWebRegistries {
@@ -38,5 +39,6 @@ class DidWebRegistries {
 
 module.exports = DidWebRegistries;
 
-module.exports.WebRegistryServer = WebRegistryServer;
 module.exports.DidWebCredentialVerifier = DidWebCredentialVerifier;
+module.exports.WebCertificate = WebCertificate;
+module.exports.WebRegistryServer = WebRegistryServer;

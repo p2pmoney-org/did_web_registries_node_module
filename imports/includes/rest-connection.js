@@ -147,8 +147,6 @@ class RestConnection  {
 	}
 	
 	rest_get(resource, callback) {
-		console.log("RestConnection.rest_get called for resource " + resource);
-		
 		var self = this;
 	    
 		var xhttp = this._createXMLHttpRequest("GET", resource);
@@ -187,8 +185,6 @@ class RestConnection  {
 	}
 	
 	rest_post(resource, postdata, callback) {
-		console.log("RestConnection.rest_post called for resource " + resource);
-		
 		var self = this;
 	    
 		var xhttp = this._createXMLHttpRequest("POST", resource);
@@ -230,8 +226,6 @@ class RestConnection  {
 	}
 	
 	rest_put(resource, postdata, callback) {
-		console.log("RestConnection.rest_put called for resource " + resource);
-		
 		var self = this;
 		
 		var xhttp = this._createXMLHttpRequest("PUT", resource);
@@ -271,8 +265,6 @@ class RestConnection  {
 	}
 	
 	rest_delete(resource, callback) {
-		console.log("RestConnection.rest_delete called for resource " + resource);
-		
 		var self = this;
 		
 		var xhttp = this._createXMLHttpRequest("DELETE", resource);

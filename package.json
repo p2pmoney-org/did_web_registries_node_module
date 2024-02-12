@@ -1,6 +1,6 @@
 {
   "name": "@p2pmoney-org/did_web_registries",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,6 +11,7 @@
   "dependencies": {
 		"crypto-js": "^4.2.0",
     "jose": "^4.13.1",
-		"jsontokens": "^4.0.1"
+		"jsontokens": "^4.0.1",
+		"xmlhttprequest": "^1.8.0"
   }
 }
