@@ -46,8 +46,66 @@ class WebRegistryServer {
 		});
 	}
 
-
 	// API
+	async getIssuerTypeString(did) {
+		let issuer_type = await this.getIssuerType(did);
+
+		switch(issuer_type) {
+			case 1:
+				return 'RootTAO';
+			case 2:
+				return 'TAO';
+			case 3:
+				return 'TI';
+			default:
+				return '';
+		}
+	}
+
+	async getIssuerType(did) {
+		let issuer = await this.trusted_issuers_registry_issuer(did).catch(err => {});
+
+		if (!issuer)
+		return;
+
+		let issuer_attributes = (issuer.attributes ? issuer.attributes : []);
+
+		let issuer_type;
+
+		for (var i = (issuer_attributes && issuer_attributes.length ? issuer_attributes.length - 1 : 0); i > -1 ; i--) {
+			let issuer_attribute = issuer_attributes[i];
+			let _issuer_type = ( issuer_attribute && issuer_attribute.issuerType ? issuer_attribute.issuerType : null);
+			
+			switch(_issuer_type) {
+				case 'TI': {
+					if (!issuer_type) {
+						issuer_type = 3;
+					}
+				}
+				break;
+				case 'TAO': {
+					if (!issuer_type || (issuer_type > 2))  {
+						issuer_type = 2; 
+					}
+				}
+				break;
+				case 'RootTAO': {
+					if (!issuer_type || (issuer_type > 1)) {
+						issuer_type = 1; 
+					}
+				}
+				break;
+	
+				default:
+					break;
+			}
+		}
+
+		return issuer_type;
+	}
+
+
+	// REST API
 
 	//
 	// configurations
@@ -66,29 +124,6 @@ class WebRegistryServer {
 
 		return res;
 	}
-
-	//
-	// authorization
-/* 	async authorization_authorize(scope) {
-		var resource = "/authorization/authentication-requests";
-
-		var postdata = {scope};
-
-		var res = await this.rest_post(resource, postdata);
-
-		return res;
-	}
-
-	async authorization_siop_sessions(grant_type, code, id_token) {
-		var resource = "/authorization/siop-sessions";
-
-		var postdata = {grant_type, code, id_token};
-
-		var res = await this.rest_post(resource, postdata);
-
-		return res;
-	} */
-
 
 
 	//
