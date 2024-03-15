@@ -40,7 +40,7 @@ class DidWebCredentialVerifier {
 		return buffer.toString('hex');
 	}
 
-	static 	getDidDomain(did) {
+	static getDidDomain(did) {
 		let parts = did.split(':')
 		let domain = parts[2];
 
@@ -65,7 +65,7 @@ class DidWebCredentialVerifier {
 			return path;
 		}
 
-		// or we assyme there is not /root_path
+		// or we assume this is not /root_path
 		let trail = did.substring(8);
 
 		// remove domain
@@ -85,6 +85,31 @@ class DidWebCredentialVerifier {
 		return (did && did.startsWith('did:web') ? true : false);
 	}
 
+	static async getDidTAO(did) {
+		if (!did)
+		return;
+
+		let did_domain = DidWebCredentialVerifier.getDidDomain(did);
+		let did_path = await DidWebCredentialVerifier.getDidPath(did);
+
+		let index = did_path.lastIndexOf('/');
+
+		if (index > 0)
+		return 'did:web:' + did_domain + ':' + did_path.substring(index);
+		else
+		return 'did:web:' + did_domain; // TAO is RootTAO
+	}
+
+	static async getDidRootTAO(did) {
+		if (!did)
+		return;
+
+		let did_domain = DidWebCredentialVerifier.getDidDomain(did);
+
+		return 'did:web:' + did_domain;
+	}
+	
+
 	static async getConnectionRawCertificate(rest_server_url) {
 		const WebCertificate = require('./web-certificate.js');
 		let webcertificate = WebCertificate.getObject(rest_server_url);
@@ -92,6 +117,38 @@ class DidWebCredentialVerifier {
 
 		return certificate;
 
+	}
+
+	static getIssuerRights(trusted_issuer) {
+		let rights = 3;
+
+		let attributes = (trusted_issuer && trusted_issuer.attributes ? trusted_issuer.attributes : []);
+
+		for (var i = 0; i < attributes.length; i++) {
+			let attribute = attributes[i];
+
+			switch(attribute.issuerType) {
+				case 'TI': {
+					rights |= 4;
+				}
+				break;
+	
+				case 'TAO': {
+					rights |= 8;
+				}
+				break;
+		
+				case 'RootTAO': {
+					rights |= 16;
+				}
+				break;
+			
+				default:
+					break;
+			}			
+		}
+
+		return rights;
 	}
 
 	static async _getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash) {
@@ -149,16 +206,23 @@ class DidWebCredentialVerifier {
 		let did_document = await web_registry_server.did_registry_did_document(issuer_did);
 
 		if (did_document) {
-			let did_path = await this.getDidPath(issuer_did);
+			let did_domain = DidWebCredentialVerifier.getDidDomain(issuer_did);
+			let did_path = await DidWebCredentialVerifier.getDidPath(issuer_did);
 			let did_parts = did_path.split('/');
 
 			vc_verification.is_did_registered = 1;
 
 			// check that issuer is a registered issuer
+			debugger;
 			let trusted_issuer = await web_registry_server.trusted_issuers_registry_issuer(issuer_did);
 
-			if (trusted_issuer)
-			vc_verification.is_did_trusted_issuer = 1;
+			if (trusted_issuer) {
+				let ti_rights = DidWebCredentialVerifier.getIssuerRights(trusted_issuer);
+				if (ti_rights & 7)
+				vc_verification.is_did_trusted_issuer = 1;
+				else
+				vc_verification.is_did_trusted_issuer = 1;
+			}
 			else
 			vc_verification.is_did_trusted_issuer = -1;
 
@@ -166,9 +230,11 @@ class DidWebCredentialVerifier {
 
 			vc_verification.TI.is_valid = (trusted_issuer ? 1 : -1);
 
-			vc_verification.TI.identity.name = (did_parts.length > 1 ? did_parts[did_parts.length - 1] : '');
+			vc_verification.TI.identity.name = (did_parts.length > 1 ? did_parts[did_parts.length - 1] : did_domain);
 
 			// get status and identity elements of RootTAO
+			let root_tao_did = await DidWebCredentialVerifier.getDidRootTAO(issuer_did);
+
 			vc_verification.RootTAO = {identity: {}};
 
 			let web_registrar_rest_api_endpoint = web_registry_server.web_env.rest_server_url;
@@ -186,9 +252,21 @@ class DidWebCredentialVerifier {
 			// get status and identity elements of TAO
 			vc_verification.TAO = {identity: {}};
 
-			vc_verification.TAO.identity.name = (did_parts.length > 2 ? did_parts[did_parts.length - 2] : '');
+			vc_verification.TAO.identity.name = (did_parts.length > 2 ? did_parts[did_parts.length - 2] : did_domain);
 
-			vc_verification.TAO.is_valid = 1;
+			let tao_did = await DidWebCredentialVerifier.getDidTAO(issuer_did);
+			let trusted_tao = await web_registry_server.trusted_issuers_registry_issuer(tao_did);
+
+			if (trusted_tao && trusted_tao.attributes) {
+				let tao_rights = DidWebCredentialVerifier.getIssuerRights(trusted_tao);
+				if (tao_rights & 11)
+				vc_verification.TAO.is_valid = 1;
+				else
+				vc_verification.TAO.is_valid = 1;
+			}
+			else {
+				vc_verification.TAO.is_valid = -1;
+			}
 
 			// 5 - VC validity status (e.g. not revoked nor suspended)
 
