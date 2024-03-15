@@ -213,7 +213,6 @@ class DidWebCredentialVerifier {
 			vc_verification.is_did_registered = 1;
 
 			// check that issuer is a registered issuer
-			debugger;
 			let trusted_issuer = await web_registry_server.trusted_issuers_registry_issuer(issuer_did);
 
 			if (trusted_issuer) {
@@ -242,6 +241,9 @@ class DidWebCredentialVerifier {
 
 			if (vc_verification.RootTAO.identity.raw_certificate) {
 				vc_verification.RootTAO.is_valid = 1;
+				vc_verification.RootTAO.is_valid_from = vc_verification.RootTAO.identity.raw_certificate.valid_from;
+				vc_verification.RootTAO.is_valid_to = vc_verification.RootTAO.identity.raw_certificate.valid_to;
+
 				vc_verification.RootTAO.identity.name = vc_verification.RootTAO.identity.raw_certificate.subject.CN;
 			}
 			else {
