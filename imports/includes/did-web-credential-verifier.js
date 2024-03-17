@@ -241,10 +241,25 @@ class DidWebCredentialVerifier {
 
 			if (vc_verification.RootTAO.identity.raw_certificate) {
 				vc_verification.RootTAO.is_valid = 1;
-				vc_verification.RootTAO.is_valid_from = vc_verification.RootTAO.identity.raw_certificate.valid_from;
-				vc_verification.RootTAO.is_valid_to = vc_verification.RootTAO.identity.raw_certificate.valid_to;
 
 				vc_verification.RootTAO.identity.name = vc_verification.RootTAO.identity.raw_certificate.subject.CN;
+
+				if (vc_verification.RootTAO.identity.raw_certificate.subject.O)
+				vc_verification.RootTAO.identity.organization = vc_verification.RootTAO.identity.raw_certificate.subject.O;
+
+				if (vc_verification.RootTAO.identity.raw_certificate.subject.OU)
+				vc_verification.RootTAO.identity.organization_unit = vc_verification.RootTAO.identity.raw_certificate.subject.OU;
+
+				vc_verification.RootTAO.identity.is_valid_from = vc_verification.RootTAO.identity.raw_certificate.valid_from;
+				vc_verification.RootTAO.identity.is_valid_to = vc_verification.RootTAO.identity.raw_certificate.valid_to;
+
+				let web_domain = vc_verification.RootTAO.identity.raw_certificate.subject.CN;
+				if (web_domain.startsWith('*.')) {
+					// wild card
+					web_domain = web_domain.slice(2);
+				}
+
+				vc_verification.RootTAO.identity.link = 'https://' + web_domain;
 			}
 			else {
 				vc_verification.RootTAO.is_valid = 0;
