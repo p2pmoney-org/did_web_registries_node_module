@@ -94,8 +94,10 @@ class DidWebCredentialVerifier {
 
 		let index = did_path.lastIndexOf('/');
 
-		if (index > 0)
-		return 'did:web:' + did_domain + ':' + did_path.substring(index);
+		if (index > 0) {
+			let tao_path = did_path.substring(0, index);
+			return 'did:web:' + did_domain + tao_path.replaceAll('/', ':');
+		}
 		else
 		return 'did:web:' + did_domain; // TAO is RootTAO
 	}
@@ -208,26 +210,26 @@ class DidWebCredentialVerifier {
 		if (did_document) {
 			let did_domain = DidWebCredentialVerifier.getDidDomain(issuer_did);
 			let did_path = await DidWebCredentialVerifier.getDidPath(issuer_did);
-			let did_parts = did_path.split('/');
+			let did_parts = (did_path.length > 1 ? did_path.split('/') : []);
 
 			vc_verification.is_did_registered = 1;
 
 			// check that issuer is a registered issuer
-			let trusted_issuer = await web_registry_server.trusted_issuers_registry_issuer(issuer_did);
+			let trusted_issuer = await web_registry_server.trusted_issuers_registry_issuer(issuer_did).catch(err => {});
 
 			if (trusted_issuer) {
 				let ti_rights = DidWebCredentialVerifier.getIssuerRights(trusted_issuer);
-				if (ti_rights & 7)
+				if ((ti_rights & 7) == 7)
 				vc_verification.is_did_trusted_issuer = 1;
 				else
-				vc_verification.is_did_trusted_issuer = 1;
+				vc_verification.is_did_trusted_issuer = -1;
 			}
 			else
 			vc_verification.is_did_trusted_issuer = -1;
 
 			vc_verification.TI = {identity: {}};
 
-			vc_verification.TI.is_valid = (trusted_issuer ? 1 : -1);
+			vc_verification.TI.is_trusted = (vc_verification.is_did_trusted_issuer ? 1 : -1);
 
 			vc_verification.TI.identity.name = (did_parts.length > 1 ? did_parts[did_parts.length - 1] : did_domain);
 
@@ -240,7 +242,7 @@ class DidWebCredentialVerifier {
 			vc_verification.RootTAO.identity.raw_certificate = await DidWebCredentialVerifier.getConnectionRawCertificate(web_registrar_rest_api_endpoint).catch(err => {});
 
 			if (vc_verification.RootTAO.identity.raw_certificate) {
-				vc_verification.RootTAO.is_valid = 1;
+				vc_verification.RootTAO.is_trusted = 1;
 
 				vc_verification.RootTAO.identity.name = vc_verification.RootTAO.identity.raw_certificate.subject.CN;
 
@@ -262,7 +264,7 @@ class DidWebCredentialVerifier {
 				vc_verification.RootTAO.identity.link = 'https://' + web_domain;
 			}
 			else {
-				vc_verification.RootTAO.is_valid = 0;
+				vc_verification.RootTAO.is_trusted = 0;
 			}
 
 
@@ -272,17 +274,17 @@ class DidWebCredentialVerifier {
 			vc_verification.TAO.identity.name = (did_parts.length > 2 ? did_parts[did_parts.length - 2] : did_domain);
 
 			let tao_did = await DidWebCredentialVerifier.getDidTAO(issuer_did);
-			let trusted_tao = await web_registry_server.trusted_issuers_registry_issuer(tao_did);
+			let trusted_tao = await web_registry_server.trusted_issuers_registry_issuer(tao_did).catch(err => {});
 
 			if (trusted_tao && trusted_tao.attributes) {
 				let tao_rights = DidWebCredentialVerifier.getIssuerRights(trusted_tao);
-				if (tao_rights & 11)
-				vc_verification.TAO.is_valid = 1;
+				if ((tao_rights & 11) == 11)
+				vc_verification.TAO.is_trusted = 1;
 				else
-				vc_verification.TAO.is_valid = 1;
+				vc_verification.TAO.is_trusted = -1;
 			}
 			else {
-				vc_verification.TAO.is_valid = -1;
+				vc_verification.TAO.is_trusted = -1;
 			}
 
 			// 5 - VC validity status (e.g. not revoked nor suspended)
