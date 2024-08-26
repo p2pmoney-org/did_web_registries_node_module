@@ -12,6 +12,20 @@ class WebCertificate {
 		return true;
 	}
 
+	getExecutionEnvironment() {
+		if ( typeof window !== 'undefined' && window ) {
+			// if we are in browser (or react-native) and not node js
+			return 'browser';
+		}
+		else if (typeof global !== 'undefined') {
+			// node js
+			return  'nodejs';
+		}
+		else {
+			return  'unkown';
+		}
+	}
+
 	pemEncode(str, n) {
 		var ret = [];
 
@@ -48,12 +62,17 @@ class WebCertificate {
 
 	handleRequest(options, detailed = false, resolve, reject) {
 		var https = require('https');
-
+		var exec_env = this.getExecutionEnvironment();
 
 		return https.get(options, (res) => {
-			var certificate = res.socket.getPeerCertificate(detailed);
+			var certificate;
+			
+			if (exec_env === 'browser')
+			certificate = null; // no method yet to get certificate from javascript in browser (2024.08.26)
+			else
+			certificate = res.socket.getPeerCertificate(detailed);
 
-			if (this.isEmpty(certificate) || certificate === null) {
+			if (certificate === null || this.isEmpty(certificate)) {
 				reject({ message: 'The website did not provide a certificate' });
 			} else {
 			if (certificate.raw) {

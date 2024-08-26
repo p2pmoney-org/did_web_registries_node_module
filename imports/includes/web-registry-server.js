@@ -180,30 +180,6 @@ class WebRegistryServer {
 		return res;
 	}
 
-	async did_registry_identifier_attribute_add(did, attribute_string, attribute_signature, algorithm_string) {
-		var resource = "/did/identifiers";
-		
-		resource += "/" + encodeURI(did) + "/attribute/add";
-
-		var postdata = {did, attribute: attribute_string, attribute_signature, algorithm: algorithm_string};
-
-		var res = await this.rest_post(resource, postdata);
-
-		return res;
-	}
-
-	//
-	// trust chain
-	async did_trust_chain(did) {
-		var resource = "/did/trust_chain";
-		
-		resource += "/" + encodeURI(did);
-
-		var res = await this.rest_get(resource);
-
-		return res;
-	}
-
 
 	//
 	// trusted issuers registry
