@@ -191,6 +191,103 @@ class DidWebCredentialVerifier {
 		return DidWebCredentialVerifier._getCredentialRevokationStatus(web_registry_server, issuer_did, credential_hash);
 	}
 
+	static async getIssuerVerificationCard(issuer_did) {
+		let issuer_verification = {issuer_did};
+
+		// check that issuer's identifier exists on the registry
+		let web_registry_server	= await DidWebCredentialVerifier.getRegistryServerForDid(issuer_did).catch(err => {});
+
+		let did_document = await web_registry_server.did_registry_did_document(issuer_did);
+
+		if (did_document) {
+			let did_domain = DidWebCredentialVerifier.getDidDomain(issuer_did);
+			let did_path = await DidWebCredentialVerifier.getDidPath(issuer_did);
+			let did_parts = (did_path.length > 1 ? did_path.split('/') : []);
+
+			issuer_verification.is_did_registered = 1;
+
+			// check that issuer is a registered issuer
+			let trusted_issuer = await web_registry_server.trusted_issuers_registry_issuer(issuer_did).catch(err => {});
+
+			if (trusted_issuer) {
+				let ti_rights = DidWebCredentialVerifier.getIssuerRights(trusted_issuer);
+				if ((ti_rights & 7) == 7)
+				issuer_verification.is_did_trusted_issuer = 1;
+				else
+				issuer_verification.is_did_trusted_issuer = -1;
+			}
+			else
+			issuer_verification.is_did_trusted_issuer = -1;
+
+			issuer_verification.TI = {identity: {}};
+
+			issuer_verification.TI.is_trusted = (issuer_verification.is_did_trusted_issuer ? 1 : -1);
+
+			issuer_verification.TI.identity.name = (did_parts.length > 1 ? did_parts[did_parts.length - 1] : did_domain);
+
+			// get status and identity elements of RootTAO
+			let root_tao_did = await DidWebCredentialVerifier.getDidRootTAO(issuer_did);
+
+			issuer_verification.RootTAO = {identity: {}};
+
+			let web_registrar_rest_api_endpoint = web_registry_server.web_env.rest_server_url;
+			issuer_verification.RootTAO.identity.raw_certificate = await DidWebCredentialVerifier.getConnectionRawCertificate(web_registrar_rest_api_endpoint).catch(err => {});
+
+			if (issuer_verification.RootTAO.identity.raw_certificate) {
+				issuer_verification.RootTAO.is_trusted = 1;
+
+				issuer_verification.RootTAO.identity.name = issuer_verification.RootTAO.identity.raw_certificate.subject.CN;
+
+				if (issuer_verification.RootTAO.identity.raw_certificate.subject.O)
+				issuer_verification.RootTAO.identity.organization = issuer_verification.RootTAO.identity.raw_certificate.subject.O;
+
+				if (issuer_verification.RootTAO.identity.raw_certificate.subject.OU)
+				issuer_verification.RootTAO.identity.organization_unit = issuer_verification.RootTAO.identity.raw_certificate.subject.OU;
+
+				issuer_verification.RootTAO.identity.is_valid_from = issuer_verification.RootTAO.identity.raw_certificate.valid_from;
+				issuer_verification.RootTAO.identity.is_valid_to = issuer_verification.RootTAO.identity.raw_certificate.valid_to;
+
+				let web_domain = issuer_verification.RootTAO.identity.raw_certificate.subject.CN;
+				if (web_domain.startsWith('*.')) {
+					// wild card
+					web_domain = web_domain.slice(2);
+				}
+
+				issuer_verification.RootTAO.identity.link = 'https://' + web_domain;
+			}
+			else {
+				issuer_verification.RootTAO.is_trusted = 0;
+			}
+
+
+			// get status and identity elements of TAO
+			issuer_verification.TAO = {identity: {}};
+
+			issuer_verification.TAO.identity.name = (did_parts.length > 2 ? did_parts[did_parts.length - 2] : did_domain);
+
+			let tao_did = await DidWebCredentialVerifier.getDidTAO(issuer_did);
+			let trusted_tao = await web_registry_server.trusted_issuers_registry_issuer(tao_did).catch(err => {});
+
+			if (trusted_tao && trusted_tao.attributes) {
+				let tao_rights = DidWebCredentialVerifier.getIssuerRights(trusted_tao);
+				if ((tao_rights & 11) == 11)
+				issuer_verification.TAO.is_trusted = 1;
+				else
+				issuer_verification.TAO.is_trusted = -1;
+			}
+			else {
+				issuer_verification.TAO.is_trusted = -1;
+			}
+
+		}
+		else {
+			issuer_verification.is_did_registered = -1;
+			issuer_verification.is_did_trusted_issuer = -1;
+		}
+
+		return issuer_verification;
+	}
+
 	static async getCredentialVerificationCard(vc_jwt) {
 		let vc_verification = {};
 

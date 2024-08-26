@@ -15,6 +15,10 @@ class DidWebRegistries {
 		return DidWebCredentialVerifier.getConnectionRawCertificate(rest_server_url);
 	}
 	
+	static async getIssuerVerificationCard(issuer_did) {
+		return DidWebCredentialVerifier.getIssuerVerificationCard(issuer_did);
+	}
+
 	static async getCredentialVerificationCard(vc_jwt) {
 		return DidWebCredentialVerifier.getCredentialVerificationCard(vc_jwt);
 	}
